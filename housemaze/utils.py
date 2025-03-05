@@ -1,8 +1,8 @@
+import importlib.resources
 from typing import Optional
 from collections import deque
 
 import jax
-import os.path
 import jax.numpy as jnp
 import numpy as np
 import pickle
@@ -188,9 +188,7 @@ def count_action_changes(actions):
 
 def load_image_dict(file: str = None, add_borders: bool = False):
   if file is None or file == "":
-    current_file_path = os.path.abspath(__file__)
-    current_directory = os.path.dirname(current_file_path)
-    file = f"{current_directory}/image_data.pkl"
+    file = importlib.resources.files(__package__) / 'assets' / 'image_data.pkl'
     print(f"No file specified for image dict.\nUsing: {file}")
 
   if not add_borders:
