@@ -357,7 +357,7 @@ class HouseMaze:
 
     grid = map_init.grid
     agent_dir = map_init.agent_dir
-    agent_pos = map_init.agent_pos
+    agent_pos = jnp.asarray(map_init.agent_pos)
 
     ##################
     # sample task object
