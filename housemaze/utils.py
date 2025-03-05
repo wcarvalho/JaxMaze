@@ -1,11 +1,12 @@
 import importlib.resources
-from typing import Optional
+import pickle
 from collections import deque
+from typing import Optional
 
 import jax
 import jax.numpy as jnp
 import numpy as np
-import pickle
+
 from housemaze.env import KeyboardActions
 
 
@@ -188,7 +189,7 @@ def count_action_changes(actions):
 
 def load_image_dict(file: str = None, add_borders: bool = False):
   if file is None or file == "":
-    file = importlib.resources.files(__package__) / 'assets' / 'image_data.pkl'
+    file = importlib.resources.files(__package__) / "assets" / "image_data.pkl"
     print(f"No file specified for image dict.\nUsing: {file}")
 
   if not add_borders:

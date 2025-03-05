@@ -1,12 +1,12 @@
 import os
+
 import jax.numpy as jnp
 import jax.tree_util as jtu
-
 import numpy as np
 
 from housemaze import levels
-from housemaze.utils import *
 from housemaze.human_dyna import multitask_env as maze
+from housemaze.utils import *
 
 
 def make_int_array(x):

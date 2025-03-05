@@ -1,8 +1,9 @@
 from typing import Optional, Tuple
+
+import distrax
 import jax
 import jax.numpy as jnp
 from flax import struct
-import distrax
 
 from housemaze import env
 

@@ -1,11 +1,11 @@
-from typing import Tuple, Optional, Union, List
-import numpy as np
+from functools import partial
+from typing import List, Optional, Tuple, Union
+
 import jax
 import jax.numpy as jnp
-
 import matplotlib.pyplot as plt
+import numpy as np
 
-from functools import partial
 from housemaze.env import KeyboardActions
 
 

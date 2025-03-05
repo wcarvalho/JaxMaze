@@ -1,9 +1,8 @@
 from typing import Callable, Tuple
 
-from flax import struct
 import jax
 import jax.numpy as jnp
-
+from flax import struct
 
 Grid = jax.Array
 AgentPos = jax.Array

@@ -1,13 +1,11 @@
-from typing import Optional, List, Callable, Tuple
-
-
 from enum import IntEnum
-from flax import struct
 from functools import partial
+from typing import Callable, List, Optional, Tuple
+
+import distrax
 import jax
 import jax.numpy as jnp
-import distrax
-
+from flax import struct
 
 Grid = jax.Array
 AgentPos = jax.Array
