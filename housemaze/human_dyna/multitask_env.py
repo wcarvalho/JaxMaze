@@ -143,7 +143,7 @@ class HouseMaze(env.HouseMaze):
     def index(p):
       return jax.lax.dynamic_index_in_dim(p, reset_params_idx, keepdims=False)
 
-    reset_params = jax.tree_map(index, params.reset_params)
+    reset_params = jax.tree.map(index, params.reset_params)
 
     grid = reset_params.map_init.grid
     agent_dir = reset_params.map_init.agent_dir

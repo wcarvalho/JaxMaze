@@ -35,7 +35,7 @@ class HouseMaze(multitask_env.HouseMaze):
     # sample level: assume only 1 level
     ##################
     reset_params_idx = 0
-    reset_params = jax.tree_map(
+    reset_params = jax.tree.map(
       lambda p: index(p, reset_params_idx), params.reset_params
     )
     grid = reset_params.map_init.grid

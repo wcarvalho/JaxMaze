@@ -1,5 +1,5 @@
+import jax
 import jax.numpy as jnp
-import jax.tree_util as jtu
 
 
 from housemaze.human_dyna import multitask_env
@@ -23,13 +23,13 @@ def maze1_all(config):
     curriculum=True,
   )
   train_params = multitask_env.EnvParams(
-    reset_params=jtu.tree_map(
+    reset_params=jax.tree.map(
       lambda *v: jnp.stack(v), *(pretrain_params + main_params)
     ),
   )
 
   test_params = multitask_env.EnvParams(
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *main_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *main_params),
   ).replace(training=False)
 
   return train_params, test_params, task_objects
@@ -60,12 +60,12 @@ def maze3_open(config):
 
   train_params = pretrain_params + main_params
   train_params = multitask_env.EnvParams(
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *train_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *train_params),
   )
 
   test_params = main_params + main_open_params
   test_params = multitask_env.EnvParams(
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *test_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *test_params),
   ).replace(training=False)
 
   return train_params, test_params, task_objects
@@ -96,14 +96,14 @@ def maze3_randomize(config):
   train_params = pretrain_params + main_params
   train_params = multitask_env.EnvParams(
     randomize_agent=True,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *train_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *train_params),
   )
 
   test_params = main_params + main_open_params
   test_params = multitask_env.EnvParams(
     training=False,
     randomize_agent=False,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *test_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *test_params),
   )
 
   return train_params, test_params, task_objects
@@ -127,13 +127,13 @@ def maze5_two_paths(config):
 
   train_params = pretrain_params + main_params
   train_params = multitask_env.EnvParams(
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *train_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *train_params),
   )
 
   test_params = main_params
   test_params = multitask_env.EnvParams(
     training=False,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *test_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *test_params),
   )
 
   return train_params, test_params, task_objects
@@ -456,13 +456,13 @@ def make_(
 
   train_params = multitask_env.EnvParams(
     **train_kwargs,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *all_train_params),
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
+    reset_params=jax.tree.map(lambda *v: jnp.stack(v), *all_eval_params),
   )
 
   label2name = {idx: name for idx, name in enumerate(all_mazes)}

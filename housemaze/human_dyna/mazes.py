@@ -1,7 +1,7 @@
 from enum import IntEnum
 
+import jax
 import jax.numpy as jnp
-import jax.tree_util as jtu
 import numpy as np
 
 from housemaze import levels as default_levels
@@ -829,7 +829,7 @@ def get_pretraining_reset_params(
     )
   if make_env_params:
     return maze.EnvParams(
-      reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *list_of_reset_params),
+      reset_params=jax.tree.map(lambda *v: jnp.stack(v), *list_of_reset_params),
     )
   return list_of_reset_params
 
@@ -880,6 +880,6 @@ def get_maze_reset_params(
   )
   if make_env_params:
     return maze.EnvParams(
-      reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *[reset_params]),
+      reset_params=jax.tree.map(lambda *v: jnp.stack(v), *[reset_params]),
     )
   return [reset_params]
