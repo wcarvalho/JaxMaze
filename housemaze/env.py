@@ -287,6 +287,15 @@ class HouseMaze:
 
     Categories are [objects, directions, spatial positions, actions]
     """
+    return Observation(
+        image=jnp.squeeze(state.grid).astype(int),
+        task_w=state.task_w.astype(float),
+        state_features=state.task_state.features.astype(float),
+        position=state.agent_pos,
+        direction=state.agent_dir,
+        prev_action=prev_action        
+    )
+
     grid = state.grid
     agent_pos = state.agent_pos
     agent_dir = state.agent_dir
