@@ -2,6 +2,7 @@ from typing import Optional, Tuple
 import jax
 import jax.numpy as jnp
 from flax import struct
+from flax.struct import field
 import distrax
 
 from housemaze import env
@@ -19,9 +20,9 @@ class ResetParams:
   train_objects: jax.Array
   test_objects: jax.Array
   starting_locs: Optional[jax.Array] = None
-  curriculum: jax.Array = jnp.array(False)
-  label: jax.Array = jnp.array(0)
-  randomize_agent: bool = jnp.array(False)
+  curriculum: jax.Array = field(default_factory=lambda: jnp.array(False))
+  label: jax.Array = field(default_factory=lambda: jnp.array(0))
+  randomize_agent: bool = field(default_factory=lambda: jnp.array(False))
   rotation: Tuple[int, int] = (0, 0)
 
 @struct.dataclass
@@ -29,8 +30,8 @@ class EnvParams:
   reset_params: ResetParams
   time_limit: int = 300
   p_test_sample_train: float = 0.5
-  force_room: bool = jnp.array(False)
-  default_room: bool = jnp.array(0)
+  force_room: bool = field(default_factory=lambda: jnp.array(False))
+  default_room: bool = field(default_factory=lambda: jnp.array(0))
   training: bool = True
   terminate_with_done: int = 0  # more relevant for web app
   randomize_agent: bool = False
@@ -72,7 +73,7 @@ class TimeStep(struct.PyTreeNode):
   reward: jax.Array
   discount: jax.Array
   observation: env.Observation
-  finished: jax.Array = jnp.array(False)
+  finished: jax.Array = field(default_factory=lambda: jnp.array(False))
 
   def first(self):
     return self.step_type == StepType.FIRST

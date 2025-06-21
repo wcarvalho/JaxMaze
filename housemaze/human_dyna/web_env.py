@@ -3,17 +3,13 @@
 1. sample goal objects k times each. keep track of the number of times an object has been sampled.
 """
 
-from typing import Optional
-
 import distrax
 import jax
 import jax.numpy as jnp
-from flax import struct
 
-from housemaze import env
 from housemaze.human_dyna import multitask_env
 from housemaze.human_dyna.multitask_env import sample_spawn_locs
-from housemaze.human_dyna.multitask_env import EnvParams, ResetParams
+from housemaze.human_dyna.multitask_env import EnvParams
 
 from housemaze.human_dyna.multitask_env import TimeStep
 from housemaze.human_dyna.multitask_env import StepType
