@@ -73,9 +73,9 @@ class TaskState:
 
 
 class StepType(jnp.uint8):
-  FIRST: jax.Array = field(default_factory=lambda: jnp.asarray(0, dtype=jnp.uint8))
-  MID: jax.Array = field(default_factory=lambda: jnp.asarray(1, dtype=jnp.uint8))
-  LAST: jax.Array = field(default_factory=lambda: jnp.asarray(2, dtype=jnp.uint8))
+  FIRST = jnp.asarray(0, dtype=jnp.uint8)
+  MID = jnp.asarray(1, dtype=jnp.uint8)
+  LAST = jnp.asarray(2, dtype=jnp.uint8)
 
 
 def object_positions(grid, objects):
