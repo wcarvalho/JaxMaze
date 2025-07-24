@@ -151,11 +151,13 @@ class EnvState:
   grid: jax.Array
   agent_pos: jax.Array
   agent_dir: int
+  rotation: Tuple[int, int] = (0, 0)
 
   # task info
   map_idx: jax.Array
   task_w: jax.Array
   task_state: Optional[TaskState] = None
+
 
 
 class TimeStep(struct.PyTreeNode):
