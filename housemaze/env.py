@@ -151,12 +151,14 @@ class EnvState:
   grid: jax.Array
   agent_pos: jax.Array
   agent_dir: int
-  rotation: Tuple[int, int] = (0, 0)
 
   # task info
   map_idx: jax.Array
   task_w: jax.Array
   task_state: Optional[TaskState] = None
+
+  # more map info
+  rotation: Tuple[int, int] = (0, 0)
 
 
 
@@ -323,7 +325,7 @@ class HouseMaze:
     )
     if state.rotation is not None:
       start = num_object_categories + num_directions + H + W + self.num_actions()
-      rotation = start + state.rotation.astype(jnp.int32).sum()
+      rotation = start + jnp.asarray(state.rotation).astype(jnp.int32).sum()
       observation = observation.replace(
         rotation=rotation)
 

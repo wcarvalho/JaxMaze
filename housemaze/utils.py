@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 import pickle
 from housemaze.env import KeyboardActions
-
+from utils import MapInit
 
 def replace_color(image, old_color, new_color):
   # Convert the image and colors to JAX arrays if they aren't already
@@ -229,6 +229,7 @@ def from_str(
   char_to_key: dict,
   object_to_index: Optional[dict] = None,
   check_grid_letters: bool = True,
+  return_map_init: bool = True,
 ):
   level_str = level_str.strip()
   rows = level_str.split("\n")
@@ -284,6 +285,12 @@ def from_str(
   assert agent_pos is not None
   assert agent_dir is not None
 
+  if return_map_init:
+    return MapInit(
+      grid=jnp.asarray(grid),
+      agent_pos=jnp.asarray(agent_pos),
+      agent_dir=jnp.asarray(agent_dir)
+    )
   return grid, agent_pos, agent_dir
 
 
