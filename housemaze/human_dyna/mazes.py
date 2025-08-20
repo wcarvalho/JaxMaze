@@ -850,8 +850,7 @@ def get_maze_reset_params(
   if swap_train_test:
     train_objects = groups[:, 1]
     test_objects = groups[:, 0]
-  map_init = maze.MapInit(
-    *from_str(maze_str, char_to_key=char2key),
+  map_init = from_str(maze_str, char_to_key=char2key).replace(
     spawn_locs=from_str_spawning(maze_str),
   )
 
