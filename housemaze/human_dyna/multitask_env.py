@@ -37,7 +37,6 @@ class EnvParams:
   randomize_agent: bool = False
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
-  float_obs: bool = False
 
 class FlatObservation(struct.PyTreeNode):
   image: jax.Array
@@ -244,10 +243,7 @@ class HouseMaze(env.HouseMaze):
     )
 
     reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
-    if params.float_obs:
-      observation = self.make_float_observation(state, prev_action=reset_action)
-    else:
-      observation = self.make_observation(state, prev_action=reset_action)
+    observation = self.make_observation(state, prev_action=reset_action)
     timestep = TimeStep(
       state=state,
       step_type=StepType.FIRST,
@@ -256,52 +252,6 @@ class HouseMaze(env.HouseMaze):
       observation=observation,
     )
     return timestep
-
-  def make_float_observation(self, state: EnvState, prev_action: jax.Array):
-    """This converts all inputs into categoricals.
-
-    Categories are [objects, directions, spatial positions, actions]
-    """
-
-    H, W = state.grid.shape[-3:-1]
-
-    MAX_NUM_OBJECTS = 100
-    grid = jnp.asarray(state.grid, dtype=jnp.float32)
-    grid = grid / MAX_NUM_OBJECTS
-    grid = grid.reshape(-1)
-
-    agent_pos = jnp.asarray(state.agent_pos, dtype=jnp.float32)
-    agent_pos = agent_pos / jnp.array([H, W], dtype=jnp.float32)
-
-    num_directions = len(env.DIR_TO_VEC)
-    agent_dir = jnp.asarray(state.agent_dir, dtype=jnp.float32)
-    agent_dir = agent_dir / num_directions
-
-    prev_action = prev_action / self.num_actions()
-
-    state_features = jnp.asarray(state.task_state.features, dtype=jnp.float32)
-    task_w = jnp.asarray(state.task_w, dtype=jnp.float32)
-    rotation = jnp.asarray(state.rotation, dtype=jnp.float32)
-
-    image = jnp.concatenate([
-      grid,
-      agent_pos,
-      agent_dir[None],
-      prev_action[None],
-      state_features,
-      task_w,
-      rotation], axis=-1)
-
-
-    observation = FlatObservation(
-      image=image,
-      state_features=state_features,
-      task_w=task_w,
-    )
-
-    # Just to be safe?
-    observation = jax.tree_util.tree_map(lambda x: jax.lax.stop_gradient(x), observation)
-    return observation
 
   def step(
     self, rng: jax.Array, timestep: TimeStep, action: jax.Array, params: EnvParams
@@ -350,10 +300,8 @@ class HouseMaze(env.HouseMaze):
     step_type = jax.lax.select(terminated | truncated, StepType.LAST, StepType.MID)
     discount = jax.lax.select(terminated, jnp.asarray(0.0), jnp.asarray(1.0))
 
-    if params.float_obs:
-      observation = self.make_float_observation(state, prev_action=action)
-    else:
-      observation = self.make_observation(state, prev_action=action)
+
+    observation = self.make_observation(state, prev_action=action)
     timestep = TimeStep(
       state=state,
       step_type=step_type,
