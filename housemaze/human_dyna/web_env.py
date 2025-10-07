@@ -116,6 +116,8 @@ class HouseMaze(multitask_env.HouseMaze):
       step_type=StepType.FIRST,
       reward=jnp.asarray(0.0),
       discount=jnp.asarray(1.0),
-      observation=self.make_observation(state, prev_action=reset_action),
+      observation=self.make_observation(
+        state, prev_action=reset_action, categorical=params.categorical_obs
+      ),
     )
     return timestep

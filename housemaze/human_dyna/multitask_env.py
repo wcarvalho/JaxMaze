@@ -37,6 +37,7 @@ class EnvParams:
   randomize_agent: bool = False
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
+  categorical_obs: bool = True
 
 
 class FlatObservation(struct.PyTreeNode):
@@ -246,7 +247,9 @@ class HouseMaze(env.HouseMaze):
     )
 
     reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
-    observation = self.make_observation(state, prev_action=reset_action)
+    observation = self.make_observation(
+      state, prev_action=reset_action, categorical=params.categorical_obs
+    )
     timestep = TimeStep(
       state=state,
       step_type=StepType.FIRST,
@@ -303,7 +306,9 @@ class HouseMaze(env.HouseMaze):
     step_type = jax.lax.select(terminated | truncated, StepType.LAST, StepType.MID)
     discount = jax.lax.select(terminated, jnp.asarray(0.0), jnp.asarray(1.0))
 
-    observation = self.make_observation(state, prev_action=action)
+    observation = self.make_observation(
+      state, prev_action=action, categorical=params.categorical_obs
+    )
     timestep = TimeStep(
       state=state,
       step_type=step_type,

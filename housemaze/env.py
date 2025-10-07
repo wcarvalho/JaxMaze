@@ -61,6 +61,7 @@ class EnvParams:
   map_init: MapInit
   objects: jax.Array
   time_limit: int = 100
+  categorical_obs: bool = True
 
 
 @struct.dataclass
@@ -284,7 +285,9 @@ class HouseMaze:
     one_hot = one_hot.at[action].set(1)
     return one_hot
 
-  def make_observation(self, state: EnvState, prev_action: jax.Array):
+  def make_observation(
+    self, state: EnvState, prev_action: jax.Array, categorical: bool = True
+  ):
     """This converts all inputs into categoricals.
 
     Categories are [objects, directions, spatial positions, actions]
@@ -292,6 +295,16 @@ class HouseMaze:
     grid = state.grid
     agent_pos = state.agent_pos
     agent_dir = state.agent_dir
+
+    if not categorical:
+      return Observation(
+        image=jnp.squeeze(grid).astype(jnp.int32),
+        state_features=state.task_state.features.astype(jnp.float32),
+        task_w=state.task_w.astype(jnp.float32),
+        direction=agent_dir,
+        position=agent_pos,
+        prev_action=prev_action,
+      )
 
     # Compute the total number of categories
     num_object_categories = self.num_categories
@@ -402,7 +415,9 @@ class HouseMaze:
       step_type=StepType.FIRST,
       reward=jnp.asarray(0.0),
       discount=jnp.asarray(1.0),
-      observation=self.make_observation(state, prev_action=reset_action),
+      observation=self.make_observation(
+        state, prev_action=reset_action, categorical=params.categorical_obs
+      ),
     )
     return timestep
 
@@ -442,6 +457,8 @@ class HouseMaze:
       step_type=step_type,
       reward=reward,
       discount=discount,
-      observation=self.make_observation(state, prev_action=action),
+      observation=self.make_observation(
+        state, prev_action=action, categorical=params.categorical_obs
+      ),
     )
     return timestep
