@@ -109,7 +109,7 @@ def sample_spawn_locs(rng, spawn_locs):
   inner_coords = jax.random.choice(
     key=rng,
     shape=(1,),
-    a=jnp.arange(H * W),
+    a=jnp.arange(H * W, dtype=jnp.int32),
     replace=False,
     # Flatten the empty_spaces mask and use it
     # as probability distribution
@@ -118,7 +118,7 @@ def sample_spawn_locs(rng, spawn_locs):
 
   # Convert the flattened index to y, x coordinates
   y, x = jnp.divmod(inner_coords[0], W)
-  return jnp.array([y, x])
+  return jnp.asarray([y, x], dtype=jnp.int32)
 
 
 class HouseMaze(env.HouseMaze):
@@ -246,15 +246,15 @@ class HouseMaze(env.HouseMaze):
       rotation=reset_params.rotation,
     )
 
-    reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
+    reset_action = jnp.array(self.num_actions(), dtype=jnp.int32)
     observation = self.make_observation(
       state, prev_action=reset_action, categorical=params.categorical_obs
     )
     timestep = TimeStep(
       state=state,
       step_type=StepType.FIRST,
-      reward=jnp.asarray(0.0),
-      discount=jnp.asarray(1.0),
+      reward=jnp.asarray(0.0, dtype=jnp.float32),
+      discount=jnp.asarray(1.0, dtype=jnp.float32),
       observation=observation,
     )
     return timestep

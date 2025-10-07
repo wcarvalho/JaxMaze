@@ -236,7 +236,7 @@ def take_action(state: EnvState, action: jax.Array) -> jax.Array:
   )
   agent_dir = (agent_dir + agent_dir_offset) % 4
 
-  return grid, agent_pos, agent_dir
+  return grid, agent_pos, agent_dir.astype(jnp.int32)
 
 
 class HouseMaze:
@@ -301,9 +301,9 @@ class HouseMaze:
         image=jnp.squeeze(grid).astype(jnp.int32),
         state_features=state.task_state.features.astype(jnp.float32),
         task_w=state.task_w.astype(jnp.float32),
-        direction=agent_dir,
-        position=agent_pos,
-        prev_action=prev_action,
+        direction=jnp.asarray(agent_dir, dtype=jnp.int32),
+        position=jnp.asarray(agent_pos, dtype=jnp.int32),
+        prev_action=jnp.asarray(prev_action, dtype=jnp.int32),
       )
 
     # Compute the total number of categories

@@ -108,11 +108,11 @@ def make_agent_tile(direction: int, tile_size: int):
 
 
 def create_image_from_grid(
-  grid: jnp.array,
+  grid: jax.Array,
   agent_pos: tuple[int, int],
   agent_dir: int,
   image_dict: dict,
-  spawn_locs: jnp.array | None = None,
+  spawn_locs: jax.Array | None = None,
   include_objects: bool = True,
   add_border: bool = True,
 ):
