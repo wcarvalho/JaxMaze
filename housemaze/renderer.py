@@ -1,11 +1,8 @@
-from typing import Tuple, Optional, Union, List
-import numpy as np
 import jax
 import jax.numpy as jnp
-
 import matplotlib.pyplot as plt
+import numpy as np
 
-from functools import partial
 from housemaze.env import KeyboardActions
 
 
@@ -112,10 +109,10 @@ def make_agent_tile(direction: int, tile_size: int):
 
 def create_image_from_grid(
   grid: jnp.array,
-  agent_pos: Tuple[int, int],
+  agent_pos: tuple[int, int],
   agent_dir: int,
   image_dict: dict,
-  spawn_locs: Optional[jnp.array] = None,
+  spawn_locs: jnp.array | None = None,
   include_objects: bool = True,
   add_border: bool = True,
 ):
@@ -216,7 +213,7 @@ def create_image_from_grid(
 
 def agent_position_in_grid(
   grid: jnp.array,
-  agent_pos: Union[Tuple[int, int], List[Tuple[int, int]]],
+  agent_pos: tuple[int, int] | list[tuple[int, int]],
   agent_dir: int,
   image_dict: dict,
 ):

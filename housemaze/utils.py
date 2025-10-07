@@ -1,13 +1,13 @@
-from typing import Optional
+import os.path
+import pickle
 from collections import deque
 
 import jax
-import os.path
 import jax.numpy as jnp
 import numpy as np
-import pickle
-from housemaze.env import KeyboardActions
-from housemaze.env import MapInit
+
+from housemaze.env import KeyboardActions, MapInit
+
 
 def replace_color(image, old_color, new_color):
   # Convert the image and colors to JAX arrays if they aren't already
@@ -217,7 +217,7 @@ def load_image_dict(file: str = None, add_borders: bool = False):
   ]
 
   for key, img in extra_keys:
-    assert not key in image_dict["keys"]
+    assert key not in image_dict["keys"]
     image_dict["keys"] = [key] + image_dict["keys"]
     image_dict["images"] = jnp.concatenate((img[None], image_dict["images"]))
 
@@ -227,7 +227,7 @@ def load_image_dict(file: str = None, add_borders: bool = False):
 def from_str(
   level_str: str,
   char_to_key: dict,
-  object_to_index: Optional[dict] = None,
+  object_to_index: dict | None = None,
   check_grid_letters: bool = True,
   return_map_init: bool = True,
 ):
@@ -289,7 +289,7 @@ def from_str(
     return MapInit(
       grid=jnp.asarray(grid),
       agent_pos=jnp.asarray(agent_pos),
-      agent_dir=jnp.asarray(agent_dir)
+      agent_dir=jnp.asarray(agent_dir),
     )
   return grid, agent_pos, agent_dir
 

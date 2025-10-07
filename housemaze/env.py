@@ -1,18 +1,15 @@
-from typing import Optional, List, Callable, Tuple
-
-
+from collections.abc import Callable
 from enum import IntEnum
-from flax import struct
+
+import distrax
 import jax
 import jax.numpy as jnp
-import distrax
-from flax.struct import field
-
+from flax import struct
 
 Grid = jax.Array
 AgentPos = jax.Array
 AgentDir = jax.Array
-ActionOutput = Tuple[Grid, AgentPos, AgentDir]
+ActionOutput = tuple[Grid, AgentPos, AgentDir]
 
 # Map of agent direction indices to vectors
 DIR_TO_VEC = jnp.array(
@@ -48,7 +45,7 @@ class Observation(struct.PyTreeNode):
   position: jax.Array
   direction: jax.Array
   prev_action: jax.Array
-  rotation: Optional[jax.Array] = None
+  rotation: jax.Array | None = None
 
 
 @struct.dataclass
@@ -56,7 +53,7 @@ class MapInit:
   grid: jax.Array
   agent_pos: jax.Array
   agent_dir: jax.Array
-  spawn_locs: Optional[jax.Array] = None
+  spawn_locs: jax.Array | None = None
 
 
 @struct.dataclass
@@ -106,7 +103,7 @@ class TaskRunner(struct.PyTreeNode):
   convert_type: Callable[[jax.Array], jax.Array] = lambda x: x.astype(jnp.int32)
 
   def task_vector(self, object):
-    return self.convert_type((object[None] == self.task_objects))
+    return self.convert_type(object[None] == self.task_objects)
 
   def check_terminated(self, features, task_w):
     del task_w
@@ -155,11 +152,10 @@ class EnvState:
   # task info
   map_idx: jax.Array
   task_w: jax.Array
-  task_state: Optional[TaskState] = None
+  task_state: TaskState | None = None
 
   # more map info
-  rotation: Tuple[int, int] = (0, 0)
-
+  rotation: tuple[int, int] = (0, 0)
 
 
 class TimeStep(struct.PyTreeNode):
@@ -274,7 +270,7 @@ class HouseMaze:
     elif self.action_spec == "minigrid":
       return MinigridActions
 
-  def num_actions(self, params: Optional[EnvParams] = None):
+  def num_actions(self, params: EnvParams | None = None):
     if self.action_spec == "keyboard":
       return 4 + int(self.use_done)
     elif self.action_spec == "minigrid":
@@ -284,7 +280,7 @@ class HouseMaze:
 
   def action_onehot(self, action):
     num_actions = self.num_actions() + 1
-    one_hot = jnp.zeros((num_actions))
+    one_hot = jnp.zeros(num_actions)
     one_hot = one_hot.at[action].set(1)
     return one_hot
 
@@ -314,7 +310,6 @@ class HouseMaze:
     start = num_object_categories + num_directions + H + W
     prev_action_category = start + prev_action
 
-
     observation = Observation(
       image=jnp.squeeze(state.grid).astype(jnp.int32),
       state_features=state.task_state.features.astype(jnp.float32),
@@ -326,11 +321,12 @@ class HouseMaze:
     if state.rotation is not None:
       start = num_object_categories + num_directions + H + W + self.num_actions()
       rotation = start + jnp.asarray(state.rotation).astype(jnp.int32).sum()
-      observation = observation.replace(
-        rotation=rotation)
+      observation = observation.replace(rotation=rotation)
 
     # Just to be safe?
-    observation = jax.tree_util.tree_map(lambda x: jax.lax.stop_gradient(x), observation)
+    observation = jax.tree_util.tree_map(
+      lambda x: jax.lax.stop_gradient(x), observation
+    )
     return observation
 
   def reset(self, rng: jax.Array, params: EnvParams) -> TimeStep:

@@ -8,11 +8,12 @@ import jax
 import jax.numpy as jnp
 
 from housemaze.human_dyna import multitask_env
-from housemaze.human_dyna.multitask_env import sample_spawn_locs
-from housemaze.human_dyna.multitask_env import EnvParams
-
-from housemaze.human_dyna.multitask_env import TimeStep
-from housemaze.human_dyna.multitask_env import StepType
+from housemaze.human_dyna.multitask_env import (
+  EnvParams,
+  StepType,
+  TimeStep,
+  sample_spawn_locs,
+)
 
 
 def index(v, i):

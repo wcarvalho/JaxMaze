@@ -1,9 +1,8 @@
-from typing import Optional, Tuple
+import distrax
 import jax
 import jax.numpy as jnp
 from flax import struct
 from flax.struct import field
-import distrax
 
 from housemaze import env
 
@@ -19,11 +18,12 @@ class ResetParams:
   map_init: env.MapInit
   train_objects: jax.Array
   test_objects: jax.Array
-  starting_locs: Optional[jax.Array] = None
+  starting_locs: jax.Array | None = None
   curriculum: jax.Array = field(default_factory=lambda: jnp.array(False))
   label: jax.Array = field(default_factory=lambda: jnp.array(0))
   randomize_agent: bool = field(default_factory=lambda: jnp.array(False))
-  rotation: Tuple[int, int] = (0, 0)
+  rotation: tuple[int, int] = (0, 0)
+
 
 @struct.dataclass
 class EnvParams:
@@ -38,10 +38,12 @@ class EnvParams:
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
 
+
 class FlatObservation(struct.PyTreeNode):
   image: jax.Array
   task_w: jax.Array
   state_features: jax.Array
+
 
 @struct.dataclass
 class EnvState:
@@ -61,9 +63,10 @@ class EnvState:
   task_object: jax.Array
   current_label: jax.Array
   offtask_w: jax.Array
-  task_state: Optional[env.TaskState] = None
-  successes: Optional[jax.Array] = None
-  rotation: Optional[jax.Array] = None
+  task_state: env.TaskState | None = None
+  successes: jax.Array | None = None
+  rotation: jax.Array | None = None
+
 
 class TimeStep(struct.PyTreeNode):
   state: EnvState
@@ -299,7 +302,6 @@ class HouseMaze(env.HouseMaze):
 
     step_type = jax.lax.select(terminated | truncated, StepType.LAST, StepType.MID)
     discount = jax.lax.select(terminated, jnp.asarray(0.0), jnp.asarray(1.0))
-
 
     observation = self.make_observation(state, prev_action=action)
     timestep = TimeStep(
