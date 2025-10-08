@@ -8,11 +8,12 @@ import jax
 import jax.numpy as jnp
 
 from housemaze.human_dyna import multitask_env
-from housemaze.human_dyna.multitask_env import sample_spawn_locs
-from housemaze.human_dyna.multitask_env import EnvParams
-
-from housemaze.human_dyna.multitask_env import TimeStep
-from housemaze.human_dyna.multitask_env import StepType
+from housemaze.human_dyna.multitask_env import (
+  EnvParams,
+  StepType,
+  TimeStep,
+  sample_spawn_locs,
+)
 
 
 def index(v, i):
@@ -115,6 +116,8 @@ class HouseMaze(multitask_env.HouseMaze):
       step_type=StepType.FIRST,
       reward=jnp.asarray(0.0),
       discount=jnp.asarray(1.0),
-      observation=self.make_observation(state, prev_action=reset_action),
+      observation=self.make_observation(
+        state, prev_action=reset_action, categorical=params.categorical_obs
+      ),
     )
     return timestep

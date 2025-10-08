@@ -1,14 +1,13 @@
-from typing import Callable, Tuple
+from collections.abc import Callable
 
-from flax import struct
 import jax
 import jax.numpy as jnp
-
+from flax import struct
 
 Grid = jax.Array
 AgentPos = jax.Array
 AgentDir = jax.Array
-ActionOutput = Tuple[Grid, AgentPos, AgentDir]
+ActionOutput = tuple[Grid, AgentPos, AgentDir]
 
 
 @struct.dataclass
@@ -56,7 +55,7 @@ class TaskRunner(struct.PyTreeNode):
 
   def task_vector(self, object):
     """once for obtained. once for visible."""
-    w = self.convert_type((object[None] == self.task_objects))
+    w = self.convert_type(object[None] == self.task_objects)
     # only get reward for getting object, not seeing it
     return jnp.concatenate([w, w * self.vis_coeff])
 

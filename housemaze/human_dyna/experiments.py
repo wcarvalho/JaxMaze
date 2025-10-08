@@ -1,11 +1,11 @@
 import jax.numpy as jnp
 import jax.tree_util as jtu
-
-
-from housemaze.human_dyna import multitask_env
-from housemaze.human_dyna import mazes
-from housemaze.utils import reverse
 import numpy as np
+
+from housemaze.human_dyna import mazes, multitask_env
+from housemaze.utils import reverse
+
+
 def maze1_all(config):
   """Maze 1: testing offtaskness for all 3 spaces."""
   env_kwargs = config.get("rlenv", {}).get("ENV_KWARGS", {})
@@ -157,6 +157,7 @@ def permute_groups(groups):
 
   return new_groups, new_char2idx
 
+
 def rotate_group(groups):
   # Flatten the groups
   flattened = groups.flatten()
@@ -170,6 +171,7 @@ def rotate_group(groups):
   new_char2idx = mazes.groups_to_char2key(new_groups)
 
   return new_groups, new_char2idx
+
 
 def basic_make_exp_block(
   config,
@@ -199,6 +201,7 @@ def basic_make_exp_block(
   maze2idx = {
     maze_name: idx for idx, maze_name in enumerate(all_mazes + [pretrain_level])
   }
+
   #################################################
   # make function for creating params
   #################################################
@@ -211,6 +214,7 @@ def basic_make_exp_block(
       max_starting_locs=max_starting_locs,
       **kwargs,
     )
+
   def get_all_rotations(maze_str, label, **kwargs):
     params = []
     idx = 0
@@ -301,8 +305,9 @@ def make_human_experiments_block(
     maze_name: idx for idx, maze_name in enumerate(all_mazes + [pretrain_level])
   }
   import itertools
+
   rotations = list(itertools.product([False, True], repeat=2))
-  #idx = 0
+  # idx = 0
   original_group_set = group_set
   original_char2key = char2key
 
@@ -313,7 +318,6 @@ def make_human_experiments_block(
     train_maze_str = getattr(mazes, train_maze)
     eval_maze_str = getattr(mazes, eval_maze)
     for rotation in rotations:
-      
       if include_rotations:
         group_set, char2key = rotate_group(group_set)
       train_params = mazes.get_maze_reset_params(
@@ -339,7 +343,6 @@ def make_human_experiments_block(
       )
       all_eval_params += eval_params
 
-
   if pretrain_level:
     pretrain_level_str = getattr(mazes, pretrain_level)
     for rotation in rotations:
@@ -348,7 +351,9 @@ def make_human_experiments_block(
       all_train_params += mazes.get_maze_reset_params(
         groups=group_set,
         char2key=char2key,
-        maze_str=reverse(pretrain_level_str, horizontal=rotation[0], vertical=rotation[1]),
+        maze_str=reverse(
+          pretrain_level_str, horizontal=rotation[0], vertical=rotation[1]
+        ),
         label=make_int(maze2idx[pretrain_level]),
         max_starting_locs=max_starting_locs,
         swap_train_test=True,
@@ -399,6 +404,7 @@ def make_(
   maze2idx = {
     maze_name: idx for idx, maze_name in enumerate(all_mazes + [pretrain_level])
   }
+
   #################################################
   # make function for creating params
   #################################################
@@ -411,6 +417,7 @@ def make_(
       max_starting_locs=max_starting_locs,
       **kwargs,
     )
+
   def get_all_rotations(maze_str, label, **kwargs):
     params = []
     idx = 0
@@ -507,18 +514,20 @@ def exp1(config, analysis_eval: bool = False):
     eval_mazes = train_mazes
   return basic_make_exp_block(config, train_mazes, eval_mazes, max_starting_locs=10)
 
+
 def exp2(config, analysis_eval: bool = False):
   train_mazes = [
     "big_m1_maze3",
-    #"big_m2_maze2",
-    "big_m3_maze1"]
+    # "big_m2_maze2",
+    "big_m3_maze1",
+  ]
   if analysis_eval:
     eval_mazes = [
       "big_m1_maze3",
       "big_m1_maze3_shortcut",
-      #"big_m2_maze2",
-      #"big_m2_maze2_onpath",
-      #"big_m2_maze2_offpath",
+      # "big_m2_maze2",
+      # "big_m2_maze2_onpath",
+      # "big_m2_maze2_offpath",
       "big_m3_maze1",
     ]
   else:
@@ -531,10 +540,9 @@ def exp2(config, analysis_eval: bool = False):
     max_starting_locs=20,
   )
 
+
 def exp3(config, analysis_eval: bool = False):
-  train_mazes = [
-    "big_m1_maze3",
-    "big_m3_maze1"]
+  train_mazes = ["big_m1_maze3", "big_m3_maze1"]
   if analysis_eval:
     eval_mazes = [
       "big_m1_maze3",
@@ -551,6 +559,7 @@ def exp3(config, analysis_eval: bool = False):
     max_starting_locs=20,
     include_rotations=True,
   )
+
 
 def exp4(config, analysis_eval: bool = False):
   """
@@ -569,7 +578,7 @@ def exp4(config, analysis_eval: bool = False):
   if analysis_eval:
     train_test_pairs = [
       ("big_m3_maze1", "big_m3_maze1"),
-      #("big_m1_maze3", "big_m1_maze3"),
+      # ("big_m1_maze3", "big_m1_maze3"),
       ("big_m1_maze3", "big_m1_maze3_shortcut"),
     ]
   else:
@@ -585,6 +594,7 @@ def exp4(config, analysis_eval: bool = False):
     max_starting_locs=config.get("NUM_STARTING_LOCS", 30),
     include_rotations=config.get("INCLUDE_ROTATIONS", True),
   )
+
 
 def exp_test(config, analysis_eval: bool = False):
   del analysis_eval

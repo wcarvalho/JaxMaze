@@ -35,3 +35,9 @@ exclude = []
 
 [tool.setuptools.package-data]
 "*" = ["*.npy", "*.yaml", "*.pkl"]
+
+[tool.ruff]
+indent-width = 2
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
