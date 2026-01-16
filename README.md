@@ -1,14 +1,14 @@
 # Install
-```
-# pip install
-pip install git+https://github.com/wcarvalho/JaxMaze.git
 
-# more manauly
-conda create -n housemaze python=3.10 pip wheel -y
-conda activate housemaze
-pip install -r requirements.tx
-# if want to run jupyter lab and plot things
-pip install -U jupyterlab matplotlib
+```bash
+# Install with uv (recommended)
+uv pip install git+https://github.com/wcarvalho/JaxMaze.git
+
+# Or install locally for development
+uv pip install -e .
+
+# Optional: for jupyter lab and plotting
+uv pip install jupyterlab matplotlib
 ```
 
 # JAX House Maze

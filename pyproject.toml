@@ -30,7 +30,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["*"]
+include = ["jaxmaze*", "housemaze*", "jaxhousemaze*"]
 exclude = []
 
 [tool.setuptools.package-data]
