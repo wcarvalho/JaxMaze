@@ -79,6 +79,8 @@ def find_optimal_path(grid, agent_pos, goal, rng=None):
 
 def bfs(grid, agent_pos, goal, key, budget=1e8):
   rows, cols, _ = grid.shape
+  # Convert agent_pos to a hashable tuple (handles JAX arrays)
+  agent_pos = (int(agent_pos[0]), int(agent_pos[1]))
   queue = deque([(agent_pos, [agent_pos])])
   visited = set()
   iterations = 0
@@ -116,6 +118,8 @@ def bfs(grid, agent_pos, goal, key, budget=1e8):
 
 def dfs(grid, agent_pos, goal, key, budget=1e8):
   rows, cols, _ = grid.shape
+  # Convert agent_pos to a hashable tuple (handles JAX arrays)
+  agent_pos = (int(agent_pos[0]), int(agent_pos[1]))
   stack = deque([(agent_pos, [agent_pos])])
   visited = set()
   iterations = 0
