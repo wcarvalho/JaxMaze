@@ -104,13 +104,16 @@ class TaskRunner(struct.PyTreeNode):
 
   task_objects: jax.Array
   convert_type: Callable[[jax.Array], jax.Array] = lambda x: x.astype(jnp.int32)
+  terminate_with_any: bool = True
 
   def task_vector(self, object):
     return self.convert_type((object[None] == self.task_objects))
 
   def check_terminated(self, features, task_w):
-    del task_w
-    return features.sum(-1) > 0
+    if self.terminate_with_any:
+      return features.sum(-1) > 0
+    else:
+      return (features*task_w).sum() > 0
 
   def reset(self, grid: jax.Array, agent_pos: jax.Array):
     """Get initial features.
