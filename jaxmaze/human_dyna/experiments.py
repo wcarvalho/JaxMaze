@@ -184,6 +184,7 @@ def basic_make_exp_block(
   pretrain_level=None,
   max_starting_locs=10,
   include_rotations=False,
+  train_curriculum: bool = True,
 ):
   def make_int(i):
     return jnp.array(i, dtype=jnp.int32)
@@ -241,14 +242,14 @@ def basic_make_exp_block(
       maze_str=getattr(mazes, pretrain_level),
       label=make_int(maze2idx[pretrain_level]),
       swap_train_test=True,
-      curriculum=True,
+      curriculum=train_curriculum,
     )
 
   for maze_name in train_mazes:
     params = make_fn(
       maze_str=getattr(mazes, maze_name),
       label=make_int(maze2idx[maze_name]),
-      curriculum=True,
+      curriculum=train_curriculum,
     )
     all_train_params += params
     all_eval_params += params
@@ -283,6 +284,7 @@ def make_human_experiments_block(
   pretrain_level=None,
   max_starting_locs=10,
   include_rotations=True,
+  train_curriculum: bool = True,
 ):
   def make_int(i):
     return jnp.array(i, dtype=jnp.int32)
@@ -608,4 +610,18 @@ def exp_test(config, analysis_eval: bool = False):
     eval_mazes,
     pretrain_level="big_practice_maze",
     max_starting_locs=20,
+  )
+
+
+def her_test(config, analysis_eval: bool = False):
+  del analysis_eval
+  train_mazes = ["her_test"]
+  eval_mazes = train_mazes
+  return basic_make_exp_block(
+      config,
+      train_mazes,
+      eval_mazes,
+      pretrain_level=None,
+      include_rotations=False,
+      train_curriculum=False,
   )
