@@ -618,10 +618,10 @@ def her_test(config, analysis_eval: bool = False):
   train_mazes = ["her_test"]
   eval_mazes = train_mazes
   return basic_make_exp_block(
-      config,
-      train_mazes,
-      eval_mazes,
-      pretrain_level=None,
-      include_rotations=False,
-      train_curriculum=False,
+    config,
+    train_mazes,
+    eval_mazes,
+    pretrain_level=None,
+    include_rotations=False,
+    train_curriculum=False,
   )
