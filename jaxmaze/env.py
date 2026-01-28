@@ -49,6 +49,7 @@ class Observation(struct.PyTreeNode):
   direction: jax.Array
   prev_action: jax.Array
   rotation: Optional[jax.Array] = None
+  player_position: Optional[jax.Array] = None
 
 
 @struct.dataclass
@@ -323,6 +324,7 @@ class HouseMaze:
       direction=jnp.array(direction_category, dtype=jnp.int32),
       position=jnp.array(position_category, dtype=jnp.int32),
       prev_action=jnp.array(prev_action_category, dtype=jnp.int32),
+      player_position=state.agent_pos,
     )
     if state.rotation is not None:
       start = num_object_categories + num_directions + H + W + self.num_actions()
@@ -410,6 +412,7 @@ class HouseMaze:
       discount=jnp.asarray(1.0),
       observation=self.make_observation(state, prev_action=reset_action),
     )
+    timestep = jax.tree.map(jax.lax.stop_gradient, timestep)
     return timestep
 
   def step(
@@ -450,4 +453,5 @@ class HouseMaze:
       discount=discount,
       observation=self.make_observation(state, prev_action=action),
     )
+    timestep = jax.tree.map(jax.lax.stop_gradient, timestep)
     return timestep
