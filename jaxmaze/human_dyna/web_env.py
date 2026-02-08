@@ -117,5 +117,5 @@ class HouseMaze(multitask_env.HouseMaze):
       discount=jnp.asarray(1.0),
       observation=self.make_observation(state, prev_action=reset_action),
     )
-    timestep = jax.tree.map(jax.lax.stop_gradient, timestep)
+    timestep = jax.tree_util.tree_map(jax.lax.stop_gradient, timestep)
     return timestep

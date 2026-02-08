@@ -255,7 +255,7 @@ class HouseMaze(env.HouseMaze):
       discount=jnp.asarray(1.0),
       observation=observation,
     )
-    timestep = jax.tree.map(jax.lax.stop_gradient, timestep)
+    timestep = jax.tree_util.tree_map(jax.lax.stop_gradient, timestep)
     return timestep
 
   def step(
@@ -314,5 +314,5 @@ class HouseMaze(env.HouseMaze):
       observation=observation,
     )
 
-    timestep = jax.tree.map(jax.lax.stop_gradient, timestep)
+    timestep = jax.tree_util.tree_map(jax.lax.stop_gradient, timestep)
     return timestep

@@ -137,7 +137,7 @@ A..#.##..#...
 
   # Create env params
   env_params = maze.EnvParams(
-    map_init=jax.tree.map(jnp.asarray, map_init),
+    map_init=jax.tree_util.tree_map(jnp.asarray, map_init),
     time_limit=jnp.array(50),
     objects=jnp.asarray(objects),
   )
