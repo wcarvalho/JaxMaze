@@ -185,6 +185,7 @@ def basic_make_exp_block(
   max_starting_locs=10,
   include_rotations=False,
   train_curriculum: bool = True,
+  pass_through_objects: bool = False,
 ):
   def make_int(i):
     return jnp.array(i, dtype=jnp.int32)
@@ -215,6 +216,7 @@ def basic_make_exp_block(
       maze_str=maze_str,
       label=label,
       max_starting_locs=max_starting_locs,
+      pass_through_objects=pass_through_objects,
       **kwargs,
     )
 
@@ -229,6 +231,7 @@ def basic_make_exp_block(
           maze_str=reverse(maze_str, horizontal=h, vertical=w),
           label=label,
           max_starting_locs=max_starting_locs,
+          pass_through_objects=pass_through_objects,
           rotation=jnp.array([int(h), int(w)]),
           **kwargs,
         )
@@ -638,4 +641,5 @@ def her_test_big(config, analysis_eval: bool = False):
       pretrain_level=None,
       include_rotations=False,
       train_curriculum=True,
+      pass_through_objects=True,
   )
