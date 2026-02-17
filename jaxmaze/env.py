@@ -48,6 +48,7 @@ class Observation(struct.PyTreeNode):
   position: jax.Array
   direction: jax.Array
   prev_action: jax.Array
+  nearby_objects: Optional[jax.Array] = None
   rotation: Optional[jax.Array] = None
   player_position: Optional[jax.Array] = None
 
@@ -159,6 +160,7 @@ class EnvState:
   # task info
   map_idx: jax.Array
   task_w: jax.Array
+  objects: jax.Array
   task_state: Optional[TaskState] = None
 
   # more map info
@@ -209,6 +211,26 @@ def position_to_two_hot(agent_position, grid_shape):
   one_hot_y = one_hot_y.at[y].set(1)
 
   return jnp.concatenate((one_hot_x, one_hot_y))
+
+
+def compute_nearby_objects(grid, agent_pos, objects, radius=5):
+  """Binary flag for each object: 1 if within `radius` steps of agent."""
+  y, x = agent_pos
+  H, W = grid.shape[:2]
+
+  y_mask = (jnp.arange(H) >= jnp.maximum(0, y - radius)) & \
+           (jnp.arange(H) < jnp.minimum(H, y + radius + 1))
+  x_mask = (jnp.arange(W) >= jnp.maximum(0, x - radius)) & \
+           (jnp.arange(W) < jnp.minimum(W, x + radius + 1))
+  window_mask = y_mask[:, None] & x_mask[None, :]
+
+  def check_object(obj):
+    present = (grid == obj)
+    if present.ndim == 3:
+      present = present[:, :, 0]
+    return (present & window_mask).any()
+
+  return jax.vmap(check_object)(objects).astype(jnp.float32)
 
 
 def take_action(state: EnvState, action: jax.Array) -> jax.Array:
@@ -317,6 +339,8 @@ class HouseMaze:
     start = num_object_categories + num_directions + H + W
     prev_action_category = start + prev_action
 
+    nearby = compute_nearby_objects(state.grid, state.agent_pos, state.objects)
+    import ipdb; ipdb.set_trace()
     observation = Observation(
       image=jnp.squeeze(state.grid).astype(jnp.int32),
       state_features=state.task_state.features.astype(jnp.float32),
@@ -324,6 +348,7 @@ class HouseMaze:
       direction=jnp.array(direction_category, dtype=jnp.int32),
       position=jnp.array(position_category, dtype=jnp.int32),
       prev_action=jnp.array(prev_action_category, dtype=jnp.int32),
+      nearby_objects=nearby,
       player_position=state.agent_pos,
     )
     if state.rotation is not None:
@@ -401,6 +426,7 @@ class HouseMaze:
       agent_dir=agent_dir,
       map_idx=map_idx,
       task_w=task_w,
+      objects=params.objects,
       task_state=task_state,
     )
 
