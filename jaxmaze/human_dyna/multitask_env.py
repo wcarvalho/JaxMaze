@@ -29,7 +29,7 @@ class ResetParams:
 @struct.dataclass
 class EnvParams:
   reset_params: ResetParams
-  time_limit: int = 300
+  time_limit: int = 200
   p_test_sample_train: float = 0.5
   force_room: bool = field(default_factory=lambda: jnp.array(False))
   default_room: bool = field(default_factory=lambda: jnp.array(0))
