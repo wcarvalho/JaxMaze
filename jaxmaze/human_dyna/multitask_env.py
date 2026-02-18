@@ -250,7 +250,7 @@ class HouseMaze(env.HouseMaze):
       task_w=task_w,
       task_object=task_object,
       offtask_w=offtask_w,
-      objects=jnp.concatenate([reset_params.train_objects, reset_params.test_objects]),
+      objects=self.task_runner.task_objects,
       task_state=task_state,
       rotation=reset_params.rotation,
     )

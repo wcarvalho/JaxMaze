@@ -431,7 +431,7 @@ class HouseMaze:
       agent_dir=agent_dir,
       map_idx=map_idx,
       task_w=task_w,
-      objects=params.objects,
+      objects=self.task_runner.task_objects,
       task_state=task_state,
     )
 
