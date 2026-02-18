@@ -598,7 +598,7 @@ def exp4(config, analysis_eval: bool = False):
     config,
     train_test_pairs,
     pretrain_level="big_practice_maze",
-    max_starting_locs=config.get("NUM_STARTING_LOCS", 30),
+    max_starting_locs=config.get("NUM_STARTING_LOCS", 100),
     include_rotations=config.get("INCLUDE_ROTATIONS", True),
   )
 

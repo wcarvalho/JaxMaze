@@ -218,14 +218,16 @@ def compute_nearby_objects(grid, agent_pos, objects, radius=5):
   y, x = agent_pos
   H, W = grid.shape[:2]
 
-  y_mask = (jnp.arange(H) >= jnp.maximum(0, y - radius)) & \
-           (jnp.arange(H) < jnp.minimum(H, y + radius + 1))
-  x_mask = (jnp.arange(W) >= jnp.maximum(0, x - radius)) & \
-           (jnp.arange(W) < jnp.minimum(W, x + radius + 1))
+  y_mask = (jnp.arange(H) >= jnp.maximum(0, y - radius)) & (
+    jnp.arange(H) < jnp.minimum(H, y + radius + 1)
+  )
+  x_mask = (jnp.arange(W) >= jnp.maximum(0, x - radius)) & (
+    jnp.arange(W) < jnp.minimum(W, x + radius + 1)
+  )
   window_mask = y_mask[:, None] & x_mask[None, :]
 
   def check_object(obj):
-    present = (grid == obj)
+    present = grid == obj
     if present.ndim == 3:
       present = present[:, :, 0]
     return (present & window_mask).any()
@@ -340,7 +342,6 @@ class HouseMaze:
     prev_action_category = start + prev_action
 
     nearby = compute_nearby_objects(state.grid, state.agent_pos, state.objects)
-    import ipdb; ipdb.set_trace()
     observation = Observation(
       image=jnp.squeeze(state.grid).astype(jnp.int32),
       state_features=state.task_state.features.astype(jnp.float32),
