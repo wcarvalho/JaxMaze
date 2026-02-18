@@ -342,7 +342,8 @@ class HouseMaze:
     start = num_object_categories + num_directions + H + W
     prev_action_category = start + prev_action
 
-    nearby = compute_nearby_objects(state.grid, state.agent_pos, state.objects)
+    nearby = compute_nearby_objects(
+        state.grid, state.agent_pos, self.task_runner.task_objects)
     obj_pos = object_positions(state.grid, self.task_runner.task_objects)  # [D, 2]
     observation = Observation(
       image=jnp.squeeze(state.grid).astype(jnp.int32),
