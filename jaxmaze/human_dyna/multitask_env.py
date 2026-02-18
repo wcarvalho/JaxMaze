@@ -1,3 +1,10 @@
+"""
+Notes:
+All task-relevant objects (concat of train_objects + test_objects from ResetParams).
+  Same IDs as task_runner.task_objects but potentially different order.
+  For goal-aligned indexing (matching task_w dims), use task_runner.task_objects instead.
+"""
+
 from typing import Optional, Tuple
 import jax
 import jax.numpy as jnp

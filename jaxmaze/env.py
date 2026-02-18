@@ -51,6 +51,7 @@ class Observation(struct.PyTreeNode):
   nearby_objects: Optional[jax.Array] = None
   rotation: Optional[jax.Array] = None
   player_position: Optional[jax.Array] = None
+  object_positions: Optional[jax.Array] = None  # [D, 2]
 
 
 @struct.dataclass
@@ -342,6 +343,7 @@ class HouseMaze:
     prev_action_category = start + prev_action
 
     nearby = compute_nearby_objects(state.grid, state.agent_pos, state.objects)
+    obj_pos = object_positions(state.grid, self.task_runner.task_objects)  # [D, 2]
     observation = Observation(
       image=jnp.squeeze(state.grid).astype(jnp.int32),
       state_features=state.task_state.features.astype(jnp.float32),
@@ -351,6 +353,7 @@ class HouseMaze:
       prev_action=jnp.array(prev_action_category, dtype=jnp.int32),
       nearby_objects=nearby,
       player_position=state.agent_pos,
+      object_positions=obj_pos,
     )
     if state.rotation is not None:
       start = num_object_categories + num_directions + H + W + self.num_actions()
