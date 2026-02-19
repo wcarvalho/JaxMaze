@@ -325,3 +325,135 @@ class HouseMaze(env.HouseMaze):
 
     timestep = jax.tree_util.tree_map(jax.lax.stop_gradient, timestep)
     return timestep
+
+
+if __name__ == "__main__":
+  import time
+  import numpy as np
+  from jaxmaze.utils import from_str, from_str_spawning
+  from jaxmaze.human_dyna.sf_task_runner import TaskRunner as SFTaskRunner
+  from jaxmaze.human_dyna import mazes
+
+  maze_str = mazes.big_m3_maze1
+
+  num_groups = 2
+  char2key, group_set, task_objects = mazes.get_group_set(num_groups)
+  task_objects = jnp.array(task_objects, dtype=jnp.int32)
+
+  map_init = from_str(maze_str, char_to_key=char2key, check_grid_letters=False)
+  spawn_locs = from_str_spawning(maze_str)
+  map_init = map_init.replace(spawn_locs=spawn_locs)
+
+  NUM_ENVS = 64
+  NUM_STEPS = 200
+  NUM_REPEATS = 20
+
+  # Stack map_init for batch
+  def tile_pytree(pytree, n):
+    return jax.tree_util.tree_map(lambda x: jnp.stack([x] * n), pytree)
+
+  batched_map_init = tile_pytree(map_init, 2)  # 2 levels
+
+  train_objects = jnp.array(
+    [group_set[0].tolist(), group_set[0].tolist()], dtype=jnp.int32
+  )
+  test_objects = jnp.array(
+    [group_set[1].tolist(), group_set[1].tolist()], dtype=jnp.int32
+  )
+
+  H, W = map_init.grid.shape[:2]
+  starting_locs = jnp.array(
+    [[[[1, 1], [1, 2], [-1, -1]], [[1, 1], [1, 2], [-1, -1]]]] * 2,
+    dtype=jnp.int32,
+  )
+
+  reset_params = ResetParams(
+    map_init=batched_map_init,
+    train_objects=train_objects,
+    test_objects=test_objects,
+    starting_locs=starting_locs,
+    curriculum=jnp.array([True, True]),
+    label=jnp.array([0, 1]),
+    randomize_agent=jnp.array([False, False]),
+    rotation=jnp.array([(0, 0), (0, 0)]),
+  )
+
+  env_params = EnvParams(
+    reset_params=reset_params,
+    time_limit=NUM_STEPS,
+  )
+
+  def run_benchmark(runner_cls, label):
+    if runner_cls == SFTaskRunner:
+      task_runner = runner_cls(task_objects=task_objects, radius=5)
+    else:
+      task_runner = runner_cls(task_objects=task_objects)
+
+    house_env = HouseMaze(task_runner=task_runner, action_spec="keyboard")
+
+    def env_step(carry, _):
+      rng, timestep = carry
+      rng, rng_step = jax.random.split(rng)
+      action = jax.random.randint(rng_step, shape=(), minval=0, maxval=4)
+      next_timestep = house_env.step(rng, timestep, action, env_params)
+      # auto-reset on last
+      rng, rng_reset = jax.random.split(rng)
+      next_timestep = jax.lax.cond(
+        next_timestep.step_type == StepType.LAST,
+        lambda: house_env.reset(rng_reset, env_params),
+        lambda: next_timestep,
+      )
+      return (rng, next_timestep), next_timestep.reward
+
+    def run_episode(rng):
+      timestep = house_env.reset(rng, env_params)
+      (_, final_ts), rewards = jax.lax.scan(
+        env_step, (rng, timestep), None, length=NUM_STEPS
+      )
+      return final_ts, rewards
+
+    run_vmapped = jax.jit(jax.vmap(run_episode))
+
+    # Warmup
+    rngs = jax.random.split(jax.random.PRNGKey(0), NUM_ENVS)
+    final_ts, rewards = run_vmapped(rngs)
+    rewards.block_until_ready()
+
+    # Correctness checks
+    print(f"\n{'=' * 60}")
+    print(f"  {label}")
+    print(f"{'=' * 60}")
+    print(f"  rewards shape: {rewards.shape}")
+    print(f"  total reward: {rewards.sum():.4f}")
+    print(f"  obs image shape: {final_ts.observation.image.shape}")
+    print(f"  obs state_features shape: {final_ts.observation.state_features.shape}")
+    print(f"  task_state features shape: {final_ts.state.task_state.features.shape}")
+    has_grid = (
+      hasattr(final_ts.state.task_state, "grid")
+      and final_ts.state.task_state.grid is not None
+    )
+    print(f"  task_state has grid: {has_grid}")
+
+    # Timing
+    times = []
+    for i in range(NUM_REPEATS):
+      rngs = jax.random.split(jax.random.PRNGKey(i + 1), NUM_ENVS)
+      start = time.perf_counter()
+      _, rewards = run_vmapped(rngs)
+      rewards.block_until_ready()
+      elapsed = time.perf_counter() - start
+      times.append(elapsed)
+
+    times = np.array(times)
+    total_steps = NUM_ENVS * NUM_STEPS
+    print(f"\n  Timing ({NUM_REPEATS} repeats, {NUM_ENVS} envs x {NUM_STEPS} steps):")
+    print(f"    mean: {times.mean() * 1000:.2f} ms  std: {times.std() * 1000:.2f} ms")
+    print(f"    steps/sec: {total_steps / times.mean():.0f}")
+    print(f"    per-step: {times.mean() / total_steps * 1e6:.2f} us")
+    return rewards
+
+  print("Running baseline benchmarks...")
+  print(f"Config: {NUM_ENVS} envs x {NUM_STEPS} steps x {NUM_REPEATS} repeats")
+
+  rewards_base = run_benchmark(env.TaskRunner, "env.TaskRunner (baseline)")
+  rewards_sf = run_benchmark(SFTaskRunner, "SFTaskRunner (baseline)")
