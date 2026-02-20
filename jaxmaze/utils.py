@@ -71,7 +71,9 @@ def sample_n_groups(
   return jnp.array(list_of_groups)
 
 
-def find_optimal_path(grid, agent_pos, goal, rng=None, pass_through_objects: bool = False):
+def find_optimal_path(
+  grid, agent_pos, goal, rng=None, pass_through_objects: bool = False
+):
   if rng is None:
     rng = jax.random.PRNGKey(42)
   return bfs(grid, agent_pos, goal, rng, pass_through_objects=pass_through_objects)[0]
@@ -107,7 +109,11 @@ def bfs(grid, agent_pos, goal, key, budget=1e8, pass_through_objects: bool = Fal
         0 <= new_x < rows
         and 0 <= new_y < cols
         and (new_x, new_y) not in visited
-        and (grid[new_x, new_y, 0] == 0 or grid[new_x, new_y, 0] == goal or (pass_through_objects and grid[new_x, new_y, 0] != 1))
+        and (
+          grid[new_x, new_y, 0] == 0
+          or grid[new_x, new_y, 0] == goal
+          or (pass_through_objects and grid[new_x, new_y, 0] != 1)
+        )
       ):
         new_path = path + [(new_x, new_y)]
         iterations += 1
@@ -145,7 +151,11 @@ def dfs(grid, agent_pos, goal, key, budget=1e8, pass_through_objects: bool = Fal
         0 <= new_x < rows
         and 0 <= new_y < cols
         and (new_x, new_y) not in visited
-        and (grid[new_x, new_y, 0] == 0 or grid[new_x, new_y, 0] == goal or (pass_through_objects and grid[new_x, new_y, 0] != 1))
+        and (
+          grid[new_x, new_y, 0] == 0
+          or grid[new_x, new_y, 0] == goal
+          or (pass_through_objects and grid[new_x, new_y, 0] != 1)
+        )
       ):
         new_path = path + [(new_x, new_y)]
         iterations += 1
