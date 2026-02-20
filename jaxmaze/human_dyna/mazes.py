@@ -909,7 +909,12 @@ def get_maze_reset_params(
 
   if curriculum:
     for idx, goal in enumerate(train_objects):
-      path = find_optimal_path(map_init.grid, map_init.agent_pos, np.array([goal]), pass_through_objects=pass_through_objects)
+      path = find_optimal_path(
+        map_init.grid,
+        map_init.agent_pos,
+        np.array([goal]),
+        pass_through_objects=pass_through_objects,
+      )
       max_path_locs = min(num_starting_locs, len(path))
       width = len(path) // max_path_locs
       starting_locs = np.array([path[i] for i in range(0, len(path), width)])
