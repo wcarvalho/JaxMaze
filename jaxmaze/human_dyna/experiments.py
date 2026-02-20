@@ -655,5 +655,5 @@ def preplay_test_big(config, analysis_eval: bool = False):
       pretrain_level=None,
       include_rotations=False,
       train_curriculum=True,
-      pass_through_objects=True,
+      pass_through_objects=False,
   )
