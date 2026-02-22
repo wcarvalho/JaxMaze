@@ -616,7 +616,7 @@ def exp_test(config, analysis_eval: bool = False):
   )
 
 
-def her_test(config, analysis_eval: bool = False):
+def her_test_small(config, analysis_eval: bool = False):
   del analysis_eval
   train_mazes = ["her_test"]
   eval_mazes = train_mazes
@@ -644,7 +644,7 @@ def her_test_big(config, analysis_eval: bool = False):
     pass_through_objects=True,
   )
 
-def preplay_test(config, analysis_eval: bool = False):
+def preplay_test_small(config, analysis_eval: bool = False):
   del analysis_eval
   train_mazes = ["preplay_test"]
   eval_mazes = train_mazes
