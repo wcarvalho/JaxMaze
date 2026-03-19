@@ -110,7 +110,7 @@ class HouseMaze(multitask_env.HouseMaze):
       task_state=task_state,
     )
 
-    reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
+    reset_action = jnp.array(self.num_actions(), dtype=jnp.int32)
     timestep = TimeStep(
       state=state,
       step_type=StepType.FIRST,

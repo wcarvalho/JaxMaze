@@ -58,6 +58,7 @@ class Observation(struct.PyTreeNode):
   direction: jax.Array
   prev_action: jax.Array
   nearby_objects: Optional[jax.Array] = None
+  prev_action_raw: Optional[jax.Array] = None
   rotation: Optional[jax.Array] = None
   player_position: Optional[jax.Array] = None
   object_positions: Optional[jax.Array] = None  # [D, 2]
@@ -286,8 +287,8 @@ class HouseMaze:
     H, W = grid.shape[-3:-1]
     num_object_categories = self.num_categories
     num_directions = len(DIR_TO_VEC)
-    num_spatial_positions = H * W
-    num_actions = self.num_actions(params) + 1  # including reset action
+    num_spatial_positions = H + W  # two-hot encoding (row + column), not flattened
+    num_actions = self.num_actions(params) + 1  # valid actions + reset action
     return num_object_categories + num_directions + num_spatial_positions + num_actions
 
   def action_enum(self):
@@ -347,6 +348,7 @@ class HouseMaze:
       direction=jnp.array(direction_category, dtype=jnp.int32),
       position=jnp.array(position_category, dtype=jnp.int32),
       prev_action=jnp.array(prev_action_category, dtype=jnp.int32),
+      prev_action_raw=prev_action,
       nearby_objects=nearby,
       player_position=state.agent_pos,
       object_positions=obj_pos,
@@ -426,7 +428,7 @@ class HouseMaze:
       task_state=task_state,
     )
 
-    reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
+    reset_action = jnp.array(self.num_actions(), dtype=jnp.int32)
     timestep = TimeStep(
       state=state,
       step_type=StepType.FIRST,

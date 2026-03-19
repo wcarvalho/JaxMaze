@@ -135,8 +135,8 @@ class HouseMaze(env.HouseMaze):
     H, W = grid.shape[-3:-1]
     num_object_categories = self.num_categories
     num_directions = len(env.DIR_TO_VEC)
-    num_spatial_positions = H * W
-    num_actions = self.num_actions(params) + 1  # including reset action
+    num_spatial_positions = H + W  # two-hot encoding (row + column), not flattened
+    num_actions = self.num_actions(params) + 1  # valid actions + reset action
     return num_object_categories + num_directions + num_spatial_positions + num_actions
 
   def reset(self, rng: jax.Array, params: EnvParams) -> TimeStep:
@@ -255,7 +255,7 @@ class HouseMaze(env.HouseMaze):
       rotation=reset_params.rotation,
     )
 
-    reset_action = jnp.array(self.num_actions() + 1, dtype=jnp.int32)
+    reset_action = jnp.array(self.num_actions(), dtype=jnp.int32)
     observation = self.make_observation(state, prev_action=reset_action)
     timestep = TimeStep(
       state=state,
