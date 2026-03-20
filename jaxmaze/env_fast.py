@@ -470,7 +470,6 @@ class HouseMaze:
 
     step_type = jax.lax.select(terminated | truncated, StepType.LAST, StepType.MID)
     discount = jax.lax.select(terminated, jnp.asarray(0.0), jnp.asarray(1.0))
-
     timestep = TimeStep(
       state=state,
       step_type=step_type,
