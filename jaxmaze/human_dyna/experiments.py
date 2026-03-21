@@ -644,6 +644,7 @@ def her_test_big(config, analysis_eval: bool = False):
     pass_through_objects=True,
   )
 
+
 def preplay_test_small(config, analysis_eval: bool = False):
   del analysis_eval
   train_mazes = ["preplay_test"]
@@ -658,8 +659,10 @@ def preplay_test_small(config, analysis_eval: bool = False):
     pass_through_objects=False,
   )
 
+
 def preplay_test_big(config, analysis_eval: bool = False):
   del analysis_eval
+  config.get("rlenv", {}).get("ENV_KWARGS", {})["NUM_GROUPS"] = 1
   train_mazes = ["preplay_test_big"]
   eval_mazes = train_mazes
   return basic_make_exp_block(
