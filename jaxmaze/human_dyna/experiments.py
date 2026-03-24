@@ -597,10 +597,74 @@ def exp4(config, analysis_eval: bool = False):
   return make_human_experiments_block(
     config,
     train_test_pairs,
-    pretrain_level="big_practice_maze",
+    pretrain_level=None,
     max_starting_locs=config.get("NUM_STARTING_LOCS", 100),
     include_rotations=config.get("INCLUDE_ROTATIONS", True),
   )
+
+
+def two_paths(config, analysis_eval: bool = False):
+  """
+  This is blocked so each block has the same group rotation.
+
+  A block is 1 rotation of a maze.
+  It has both train and test on that maze.
+
+  Blocks are:
+    - (big_m3_maze1, big_m3_maze1) (0, 0), group_rotation = 0
+    - (big_m1_maze3, big_m1_maze3_shortcut) (0, 0), group_rotation = 1
+    - (big_m3_maze1, big_m3_maze1) (0, 1), group_rotation = 2
+    - (big_m1_maze3, big_m1_maze3_shortcut) (0, 1), group_rotation = 3
+    - etc.
+  """
+  if analysis_eval:
+    train_test_pairs = [
+      ("big_m1_maze3", "big_m1_maze3_shortcut"),
+    ]
+  else:
+    train_test_pairs = [
+      ("big_m3_maze1", "big_m3_maze1"),
+    ]
+
+  return make_human_experiments_block(
+    config,
+    train_test_pairs,
+    pretrain_level=None,
+    max_starting_locs=config.get("NUM_STARTING_LOCS", 100),
+    include_rotations=config.get("INCLUDE_ROTATIONS", True),
+  )
+
+def shortcut(config, analysis_eval: bool = False):
+  """
+  This is blocked so each block has the same group rotation.
+
+  A block is 1 rotation of a maze.
+  It has both train and test on that maze.
+
+  Blocks are:
+    - (big_m3_maze1, big_m3_maze1) (0, 0), group_rotation = 0
+    - (big_m1_maze3, big_m1_maze3_shortcut) (0, 0), group_rotation = 1
+    - (big_m3_maze1, big_m3_maze1) (0, 1), group_rotation = 2
+    - (big_m1_maze3, big_m1_maze3_shortcut) (0, 1), group_rotation = 3
+    - etc.
+  """
+  if analysis_eval:
+    train_test_pairs = [
+      ("big_m3_maze1", "big_m3_maze1"),
+    ]
+  else:
+    train_test_pairs = [
+      ("big_m1_maze3", "big_m1_maze3"),
+    ]
+
+  return make_human_experiments_block(
+    config,
+    train_test_pairs,
+    pretrain_level=None,
+    max_starting_locs=config.get("NUM_STARTING_LOCS", 100),
+    include_rotations=config.get("INCLUDE_ROTATIONS", True),
+  )
+
 
 
 def exp_test(config, analysis_eval: bool = False):
