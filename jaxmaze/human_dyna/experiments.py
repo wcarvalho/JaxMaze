@@ -192,6 +192,8 @@ def basic_make_exp_block(
 
   train_kwargs = train_kwargs or dict()
   eval_kwargs = eval_kwargs or dict()
+  if config.get("DISTANCE_WEIGHT_CURRICULUM", False):
+    train_kwargs["distance_weight_curriculum"] = True
 
   # setup
   env_kwargs = config.get("rlenv", {}).get("ENV_KWARGS", {})
@@ -294,6 +296,8 @@ def make_human_experiments_block(
 
   train_kwargs = train_kwargs or dict()
   eval_kwargs = eval_kwargs or dict()
+  if config.get("DISTANCE_WEIGHT_CURRICULUM", False):
+    train_kwargs["distance_weight_curriculum"] = True
 
   # setup
   env_kwargs = config.get("rlenv", {}).get("ENV_KWARGS", {})
@@ -634,6 +638,7 @@ def two_paths(config, analysis_eval: bool = False):
     include_rotations=config.get("INCLUDE_ROTATIONS", True),
   )
 
+
 def shortcut(config, analysis_eval: bool = False):
   """
   This is blocked so each block has the same group rotation.
@@ -664,7 +669,6 @@ def shortcut(config, analysis_eval: bool = False):
     max_starting_locs=config.get("NUM_STARTING_LOCS", 100),
     include_rotations=config.get("INCLUDE_ROTATIONS", True),
   )
-
 
 
 def exp_test(config, analysis_eval: bool = False):
