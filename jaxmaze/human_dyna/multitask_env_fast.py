@@ -47,6 +47,7 @@ class EnvParams:
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
   distance_weight_curriculum: bool = False
+  adaptive_curriculum: bool = False
 
 
 class FlatObservation(struct.PyTreeNode):
@@ -76,6 +77,8 @@ class EnvState:
   objects: jax.Array = None
   task_state: Optional[env.TaskState] = None
   successes: Optional[jax.Array] = None
+  pair_idx: Optional[jax.Array] = None
+  curriculum_loc_idx: Optional[jax.Array] = None
   rotation: Optional[jax.Array] = None
 
 
@@ -134,7 +137,9 @@ class HouseMaze(env.HouseMaze):
     num_actions = self.num_actions(params) + 1  # valid actions + reset action
     return num_object_categories + num_directions + num_spatial_positions + num_actions
 
-  def reset(self, rng: jax.Array, params: EnvParams) -> TimeStep:
+  def reset(
+    self, rng: jax.Array, params: EnvParams, successes: jax.Array = None
+  ) -> TimeStep:
     """
 
     1. Sample level.
@@ -155,6 +160,15 @@ class HouseMaze(env.HouseMaze):
     agent_dir = reset_params.map_init.agent_dir
 
     ##################
+    # init successes tracker
+    ##################
+    # starting_locs before level indexing: [nlevels, num_pairs, max_starting_locs, 2]
+    if successes is None:
+      # Init: 1 for padded/invalid entries, 0 for valid positions
+      valid_mask = (params.reset_params.starting_locs >= 0).all(-1)
+      successes = (~valid_mask).astype(jnp.int32)
+
+    ##################
     # sample pair
     ##################
     pair_idx = mask_sample(mask=reset_params.train_objects >= 0, rng=rng)
@@ -162,37 +176,42 @@ class HouseMaze(env.HouseMaze):
     ##################
     # sample position (function of which pair has been choice)
     ##################
-    def sample_pos_from_curriculum(rng_):
+    def sample_pos_from_curriculum():
       locs = jax.lax.dynamic_index_in_dim(
         reset_params.starting_locs, pair_idx, keepdims=False
       )
-      valid = (locs >= 0).all(-1)
-      num_locs = valid.shape[0]
-      # Index 0 = farthest from goal. Linear weight: w_i = num_locs - i
-      distance_weights = jnp.arange(num_locs, 0, -1, dtype=jnp.float32)
-      uniform_weights = jnp.ones(num_locs, dtype=jnp.float32)
-      probs = jnp.where(
-        params.distance_weight_curriculum, distance_weights, uniform_weights
+      valid = (locs >= 0).all(-1)  # [max_starting_locs]
+      pair_successes = successes[reset_params_idx, pair_idx]  # [max_starting_locs]
+
+      # Find curriculum frontier: highest-indexed unsolved position
+      # Index 0 = farthest from goal, last valid = closest to goal
+      # Curriculum starts at closest (highest index) and moves toward farthest
+      unsolved = valid & (pair_successes == 0)
+      has_unsolved = unsolved.any()
+      # Last True = highest unsolved index = closest to goal among unsolved
+      max_idx = unsolved.shape[0] - 1
+      loc_idx = jnp.where(
+        has_unsolved,
+        max_idx - jnp.argmax(unsolved[::-1]),
+        jnp.array(0, dtype=jnp.int32),
       )
-      probs = jnp.where(valid, probs, 0.0)
-      probs = probs / probs.sum()
-      rng_, rng__ = jax.random.split(rng_)
-      logits = jnp.log(probs + 1e-8)
-      loc_idx = jax.random.categorical(rng__, logits)
       loc = jax.lax.dynamic_index_in_dim(locs, loc_idx, keepdims=False)
-      return loc
+      return loc, loc_idx
 
     def sample_normal(rng_, reset_params, params):
       return jax.lax.cond(
         jnp.logical_and(reset_params.curriculum, params.training),
-        lambda: sample_pos_from_curriculum(rng_),
-        lambda: reset_params.map_init.agent_pos,
+        lambda: sample_pos_from_curriculum(),
+        lambda: (reset_params.map_init.agent_pos, jnp.array(-1, dtype=jnp.int32)),
       )
 
     rng, rng_ = jax.random.split(rng)
-    agent_pos = jax.lax.cond(
+    agent_pos, curriculum_loc_idx = jax.lax.cond(
       jnp.logical_and(params.randomize_agent, reset_params.randomize_agent),
-      lambda: sample_spawn_locs(rng_, reset_params.map_init.spawn_locs),
+      lambda: (
+        sample_spawn_locs(rng_, reset_params.map_init.spawn_locs),
+        jnp.array(-1, dtype=jnp.int32),
+      ),
       lambda: sample_normal(rng_, reset_params, params),
     )
 
@@ -259,6 +278,9 @@ class HouseMaze(env.HouseMaze):
       offtask_w=offtask_w,
       objects=self.task_runner.task_objects,
       task_state=task_state,
+      successes=successes,
+      pair_idx=pair_idx,
+      curriculum_loc_idx=curriculum_loc_idx,
       rotation=reset_params.rotation,
     )
 
@@ -292,19 +314,30 @@ class HouseMaze(env.HouseMaze):
     # OPTIMIZATION: pass prior grid directly instead of from TaskState
     task_state = self.task_runner.step(timestep.state.grid, grid, agent_pos)
 
+    # Update successes on successful object pickup (adaptive curriculum)
+    terminated_features = self.task_runner.check_terminated(
+      task_state.features, timestep.state.task_w
+    )
+    new_successes = jax.lax.cond(
+      jnp.logical_and(params.adaptive_curriculum, terminated_features),
+      lambda: timestep.state.successes.at[
+        timestep.state.map_idx,
+        timestep.state.pair_idx,
+        timestep.state.curriculum_loc_idx,
+      ].set(1),
+      lambda: timestep.state.successes,
+    )
+
     state = timestep.state.replace(
       grid=grid,
       agent_pos=agent_pos,
       agent_dir=agent_dir,
       task_state=task_state,
       step_num=timestep.state.step_num + 1,
+      successes=new_successes,
     )
 
     terminated_done = action == self.action_enum().done
-    # any object picked up
-    terminated_features = self.task_runner.check_terminated(
-      task_state.features, timestep.state.task_w
-    )
     terminated = jax.lax.switch(
       params.terminate_with_done,
       (

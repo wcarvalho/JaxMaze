@@ -480,7 +480,7 @@ class AutoResetWrapper:
 
   def __auto_reset(self, key, params, timestep):
     key, key_ = jax.random.split(key)
-    return self._env.reset(key_, params)
+    return self._env.reset(key_, params, successes=timestep.state.successes)
 
   def step(self, key: jax.Array, prior_timestep, action, params):
     return jax.lax.cond(
