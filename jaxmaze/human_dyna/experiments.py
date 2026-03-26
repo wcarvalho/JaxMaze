@@ -268,14 +268,18 @@ def basic_make_exp_block(
     )
     all_eval_params += params
 
+  num_levels = max(len(all_train_params), len(all_eval_params))
+
   train_params = multitask_env.EnvParams(
     **train_kwargs,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
   )
 
@@ -376,14 +380,18 @@ def make_human_experiments_block(
         rotation=jnp.asarray(rotation),
       )
 
+  num_levels = max(len(all_train_params), len(all_eval_params))
+
   train_params = multitask_env.EnvParams(
     **train_kwargs,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
   )
 
@@ -476,14 +484,18 @@ def make_(
     )
     all_eval_params += params
 
+  num_levels = max(len(all_train_params), len(all_eval_params))
+
   train_params = multitask_env.EnvParams(
     **train_kwargs,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
+    num_levels=num_levels,
     reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
   )
 
