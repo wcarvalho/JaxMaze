@@ -194,7 +194,7 @@ def basic_make_exp_block(
   eval_kwargs = eval_kwargs or dict()
   if config.get("DISTANCE_WEIGHT_CURRICULUM", False):
     train_kwargs["distance_weight_curriculum"] = True
-  if config.get("ADAPTIVE_CURRICULUM", False):
+  if config.get("ADAPTIVE_CURRICULUM", True):
     train_kwargs["adaptive_curriculum"] = True
 
   # setup
@@ -300,7 +300,7 @@ def make_human_experiments_block(
   eval_kwargs = eval_kwargs or dict()
   if config.get("DISTANCE_WEIGHT_CURRICULUM", False):
     train_kwargs["distance_weight_curriculum"] = True
-  if config.get("ADAPTIVE_CURRICULUM", False):
+  if config.get("ADAPTIVE_CURRICULUM", True):
     train_kwargs["adaptive_curriculum"] = True
 
   # setup
