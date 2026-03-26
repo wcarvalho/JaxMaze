@@ -46,6 +46,7 @@ class EnvParams:
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
   distance_weight_curriculum: bool = False  # linear distance-weighted sampling
+  adaptive_curriculum: bool = False
 
 
 class FlatObservation(struct.PyTreeNode):

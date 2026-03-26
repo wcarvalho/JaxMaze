@@ -923,6 +923,7 @@ def get_maze_reset_params(
         np.array([goal]),
         pass_through_objects=pass_through_objects,
       )
+      path = path[:-1]  # exclude goal cell itself
       max_path_locs = min(num_starting_locs, len(path))
       width = len(path) // max_path_locs
       starting_locs = np.array([path[i] for i in range(0, len(path), width)])
