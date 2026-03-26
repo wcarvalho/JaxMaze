@@ -48,9 +48,7 @@ class EnvParams:
   task_probs: jax.Array = None
   distance_weight_curriculum: bool = False
   adaptive_curriculum: bool = False
-  num_levels: int = (
-    0  # explicit successes allocation size; 0 = infer from starting_locs
-  )
+  initial_successes: Optional[jax.Array] = None
 
 
 class FlatObservation(struct.PyTreeNode):
@@ -167,17 +165,12 @@ class HouseMaze(env.HouseMaze):
     ##################
     # starting_locs before level indexing: [nlevels, num_pairs, max_starting_locs, 2]
     if successes is None:
-      # Init: 1 for padded/invalid entries, 0 for valid positions
-      valid_mask = (params.reset_params.starting_locs >= 0).all(-1)
-      successes = (~valid_mask).astype(jnp.int32)
-      # Pad to num_levels if specified (ensures consistent shape across train/eval)
-      if params.num_levels > 0:
-        actual_nlevels = successes.shape[0]
-        pad_size = params.num_levels - actual_nlevels
-        if pad_size > 0:
-          # Pad with 1s (mark extra levels as "already solved")
-          pad = jnp.ones((pad_size, *successes.shape[1:]), dtype=successes.dtype)
-          successes = jnp.concatenate([successes, pad], axis=0)
+      if params.initial_successes is not None:
+        successes = params.initial_successes
+      else:
+        # Fallback: infer from starting_locs
+        valid_mask = (params.reset_params.starting_locs >= 0).all(-1)
+        successes = (~valid_mask).astype(jnp.int32)
 
     ##################
     # sample pair

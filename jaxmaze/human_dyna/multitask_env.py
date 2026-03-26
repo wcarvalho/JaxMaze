@@ -47,9 +47,7 @@ class EnvParams:
   task_probs: jax.Array = None
   distance_weight_curriculum: bool = False  # linear distance-weighted sampling
   adaptive_curriculum: bool = False
-  num_levels: int = (
-    0  # explicit successes allocation size; 0 = infer from starting_locs
-  )
+  initial_successes: Optional[jax.Array] = None
 
 
 class FlatObservation(struct.PyTreeNode):

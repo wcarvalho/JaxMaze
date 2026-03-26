@@ -268,19 +268,34 @@ def basic_make_exp_block(
     )
     all_eval_params += params
 
+  train_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params)
+  eval_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params)
+
+  # Precompute initial_successes with consistent shape across train/eval
   num_levels = max(len(all_train_params), len(all_eval_params))
+
+  def make_initial_successes(reset_params):
+    # [nlevels, num_pairs, max_starting_locs, 2] -> [num_levels, num_pairs, max_starting_locs]
+    valid_mask = (reset_params.starting_locs >= 0).all(-1)
+    successes = (~valid_mask).astype(jnp.int32)
+    # Pad to num_levels with 1s (already solved) for unused levels
+    pad_size = num_levels - successes.shape[0]
+    if pad_size > 0:
+      pad = jnp.ones((pad_size, *successes.shape[1:]), dtype=successes.dtype)
+      successes = jnp.concatenate([successes, pad], axis=0)
+    return successes
 
   train_params = multitask_env.EnvParams(
     **train_kwargs,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
+    initial_successes=make_initial_successes(train_reset_params),
+    reset_params=train_reset_params,
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
+    initial_successes=make_initial_successes(eval_reset_params),
+    reset_params=eval_reset_params,
   )
 
   label2name = {idx: name for idx, name in enumerate(all_mazes)}
@@ -380,19 +395,34 @@ def make_human_experiments_block(
         rotation=jnp.asarray(rotation),
       )
 
+  train_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params)
+  eval_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params)
+
+  # Precompute initial_successes with consistent shape across train/eval
   num_levels = max(len(all_train_params), len(all_eval_params))
+
+  def make_initial_successes(reset_params):
+    # [nlevels, num_pairs, max_starting_locs, 2] -> [num_levels, num_pairs, max_starting_locs]
+    valid_mask = (reset_params.starting_locs >= 0).all(-1)
+    successes = (~valid_mask).astype(jnp.int32)
+    # Pad to num_levels with 1s (already solved) for unused levels
+    pad_size = num_levels - successes.shape[0]
+    if pad_size > 0:
+      pad = jnp.ones((pad_size, *successes.shape[1:]), dtype=successes.dtype)
+      successes = jnp.concatenate([successes, pad], axis=0)
+    return successes
 
   train_params = multitask_env.EnvParams(
     **train_kwargs,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
+    initial_successes=make_initial_successes(train_reset_params),
+    reset_params=train_reset_params,
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
+    initial_successes=make_initial_successes(eval_reset_params),
+    reset_params=eval_reset_params,
   )
 
   label2name = {idx: name for idx, name in enumerate(all_mazes)}
@@ -484,19 +514,34 @@ def make_(
     )
     all_eval_params += params
 
+  train_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params)
+  eval_reset_params = jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params)
+
+  # Precompute initial_successes with consistent shape across train/eval
   num_levels = max(len(all_train_params), len(all_eval_params))
+
+  def make_initial_successes(reset_params):
+    # [nlevels, num_pairs, max_starting_locs, 2] -> [num_levels, num_pairs, max_starting_locs]
+    valid_mask = (reset_params.starting_locs >= 0).all(-1)
+    successes = (~valid_mask).astype(jnp.int32)
+    # Pad to num_levels with 1s (already solved) for unused levels
+    pad_size = num_levels - successes.shape[0]
+    if pad_size > 0:
+      pad = jnp.ones((pad_size, *successes.shape[1:]), dtype=successes.dtype)
+      successes = jnp.concatenate([successes, pad], axis=0)
+    return successes
 
   train_params = multitask_env.EnvParams(
     **train_kwargs,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_train_params),
+    initial_successes=make_initial_successes(train_reset_params),
+    reset_params=train_reset_params,
   )
 
   test_params = multitask_env.EnvParams(
     **eval_kwargs,
     training=False,
-    num_levels=num_levels,
-    reset_params=jtu.tree_map(lambda *v: jnp.stack(v), *all_eval_params),
+    initial_successes=make_initial_successes(eval_reset_params),
+    reset_params=eval_reset_params,
   )
 
   label2name = {idx: name for idx, name in enumerate(all_mazes)}
