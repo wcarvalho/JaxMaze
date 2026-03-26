@@ -46,8 +46,6 @@ class EnvParams:
   randomize_agent: bool = False
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
-  distance_weight_curriculum: bool = False
-  adaptive_curriculum: bool = False
   initial_successes: Optional[jax.Array] = None
 
 
@@ -129,6 +127,10 @@ def sample_spawn_locs(rng, spawn_locs):
 
 
 class HouseMaze(env.HouseMaze):
+  def __init__(self, curriculum_strategy=None, **kwargs):
+    super().__init__(**kwargs)
+    self.curriculum_strategy = curriculum_strategy
+
   def total_categories(self, params: EnvParams):
     grid = params.reset_params.map_init.grid
     H, W = grid.shape[-3:-1]
@@ -180,33 +182,88 @@ class HouseMaze(env.HouseMaze):
     ##################
     # sample position (function of which pair has been choice)
     ##################
-    def sample_pos_from_curriculum():
+    # Shared setup for all curriculum strategies
+    def _curriculum_locs():
       locs = jax.lax.dynamic_index_in_dim(
         reset_params.starting_locs, pair_idx, keepdims=False
       )
       valid = (locs >= 0).all(-1)  # [max_starting_locs]
       pair_successes = successes[reset_params_idx, pair_idx]  # [max_starting_locs]
+      return locs, valid, pair_successes
 
-      # Find curriculum frontier: highest-indexed unsolved position
-      # Index 0 = farthest from goal, last valid = closest to goal
-      # Curriculum starts at closest (highest index) and moves toward farthest
+    def _frontier_idx(valid, pair_successes):
+      """Highest-indexed unsolved valid position (closest to goal among unsolved)."""
       unsolved = valid & (pair_successes == 0)
       has_unsolved = unsolved.any()
-      # Last True = highest unsolved index = closest to goal among unsolved
       max_idx = unsolved.shape[0] - 1
-      loc_idx = jnp.where(
+      return jnp.where(
         has_unsolved,
         max_idx - jnp.argmax(unsolved[::-1]),
         jnp.array(0, dtype=jnp.int32),
       )
+
+    def sample_pos_weighted(rng_):
+      """Sample from solved + frontier, weighted by 1/count² for solved, 1 for frontier."""
+      locs, valid, pair_successes = _curriculum_locs()
+      frontier = _frontier_idx(valid, pair_successes)
+
+      solved = valid & (pair_successes > 0)
+      is_frontier = jnp.arange(locs.shape[0]) == frontier
+      eligible = solved | (is_frontier & valid)
+
+      weights = jnp.where(
+        pair_successes > 0,
+        1.0 / (pair_successes.astype(jnp.float32) ** 2),
+        1.0,
+      )
+      weights = jnp.where(eligible, weights, 0.0)
+      weights = weights / jnp.maximum(weights.sum(), 1e-8)
+      loc_idx = jax.random.categorical(rng_, jnp.log(jnp.maximum(weights, 1e-10)))
       loc = jax.lax.dynamic_index_in_dim(locs, loc_idx, keepdims=False)
       return loc, loc_idx
 
+    def sample_pos_uniform(rng_):
+      """Sample uniformly from valid starting locations."""
+      locs, valid, _ = _curriculum_locs()
+      logits = jnp.where(valid, 0.0, -1e8).astype(jnp.float32)
+      loc_idx = jax.random.categorical(rng_, logits)
+      loc = jax.lax.dynamic_index_in_dim(locs, loc_idx, keepdims=False)
+      return loc, loc_idx
+
+    def sample_pos_half_uniform_half_far(rng_):
+      """50% uniform over starting_locs, 50% use starting_locs[0] (farthest)."""
+      locs, valid, _ = _curriculum_locs()
+      rng1, rng2 = jax.random.split(rng_)
+
+      def _uniform():
+        logits = jnp.where(valid, 0.0, -1e8).astype(jnp.float32)
+        idx = jax.random.categorical(rng2, logits)
+        return jax.lax.dynamic_index_in_dim(locs, idx, keepdims=False), idx
+
+      def _farthest():
+        return locs[0], jnp.array(0, dtype=jnp.int32)
+
+      return jax.lax.cond(jax.random.bernoulli(rng1, 0.5), _uniform, _farthest)
+
     def sample_normal(rng_, reset_params, params):
+      no_curriculum = (
+        reset_params.map_init.agent_pos,
+        jnp.array(-1, dtype=jnp.int32),
+      )
+      if self.curriculum_strategy is None:
+        return no_curriculum
+      if self.curriculum_strategy == "weighted":
+        sample_fn = lambda: sample_pos_weighted(rng_)
+      elif self.curriculum_strategy == "uniform":
+        sample_fn = lambda: sample_pos_uniform(rng_)
+      elif self.curriculum_strategy == "half_uniform_half_far":
+        sample_fn = lambda: sample_pos_half_uniform_half_far(rng_)
+      else:
+        raise ValueError(f"Unknown curriculum_strategy: {self.curriculum_strategy}")
       return jax.lax.cond(
         jnp.logical_and(reset_params.curriculum, params.training),
-        lambda: sample_pos_from_curriculum(),
-        lambda: (reset_params.map_init.agent_pos, jnp.array(-1, dtype=jnp.int32)),
+        sample_fn,
+        lambda: no_curriculum,
       )
 
     rng, rng_ = jax.random.split(rng)
@@ -318,19 +375,24 @@ class HouseMaze(env.HouseMaze):
     # OPTIMIZATION: pass prior grid directly instead of from TaskState
     task_state = self.task_runner.step(timestep.state.grid, grid, agent_pos)
 
-    # Update successes on successful object pickup (adaptive curriculum)
     terminated_features = self.task_runner.check_terminated(
       task_state.features, timestep.state.task_w
     )
-    new_successes = jax.lax.cond(
-      jnp.logical_and(params.adaptive_curriculum, terminated_features),
-      lambda: timestep.state.successes.at[
-        timestep.state.map_idx,
-        timestep.state.pair_idx,
-        timestep.state.curriculum_loc_idx,
-      ].set(1),
-      lambda: timestep.state.successes,
-    )
+
+    # Update successes on successful object pickup (adaptive curriculum)
+    if self.curriculum_strategy is not None:
+      _map_idx = timestep.state.map_idx
+      _pair_idx = timestep.state.pair_idx
+      _loc_idx = timestep.state.curriculum_loc_idx
+      new_successes = jax.lax.cond(
+        terminated_features,
+        lambda: timestep.state.successes.at[_map_idx, _pair_idx, _loc_idx].set(
+          timestep.state.successes[_map_idx, _pair_idx, _loc_idx] + 1
+        ),
+        lambda: timestep.state.successes,
+      )
+    else:
+      new_successes = timestep.state.successes
 
     state = timestep.state.replace(
       grid=grid,

@@ -47,6 +47,7 @@ class EnvParams:
   task_probs: jax.Array = None
   distance_weight_curriculum: bool = False  # linear distance-weighted sampling
   adaptive_curriculum: bool = False
+  weighted_curriculum: bool = False
   initial_successes: Optional[jax.Array] = None
 
 
