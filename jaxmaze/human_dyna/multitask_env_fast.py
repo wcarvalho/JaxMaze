@@ -46,6 +46,7 @@ class EnvParams:
   randomize_agent: bool = False
   randomization_radius: int = 0  # New parameter
   task_probs: jax.Array = None
+  distance_weight_curriculum: bool = False
 
 
 class FlatObservation(struct.PyTreeNode):
@@ -165,7 +166,19 @@ class HouseMaze(env.HouseMaze):
       locs = jax.lax.dynamic_index_in_dim(
         reset_params.starting_locs, pair_idx, keepdims=False
       )
-      loc_idx = mask_sample(mask=(locs >= 0).all(-1), rng=rng_)
+      valid = (locs >= 0).all(-1)
+      num_locs = valid.shape[0]
+      # Index 0 = farthest from goal. Linear weight: w_i = num_locs - i
+      distance_weights = jnp.arange(num_locs, 0, -1, dtype=jnp.float32)
+      uniform_weights = jnp.ones(num_locs, dtype=jnp.float32)
+      probs = jnp.where(
+        params.distance_weight_curriculum, distance_weights, uniform_weights
+      )
+      probs = jnp.where(valid, probs, 0.0)
+      probs = probs / probs.sum()
+      rng_, rng__ = jax.random.split(rng_)
+      logits = jnp.log(probs + 1e-8)
+      loc_idx = jax.random.categorical(rng__, logits)
       loc = jax.lax.dynamic_index_in_dim(locs, loc_idx, keepdims=False)
       return loc
 
