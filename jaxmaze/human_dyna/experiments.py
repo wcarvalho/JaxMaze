@@ -182,7 +182,7 @@ def basic_make_exp_block(
   train_kwargs=None,
   eval_kwargs=None,
   pretrain_level=None,
-  max_starting_locs=10,
+  max_starting_locs=100,
   include_rotations=False,
   train_curriculum: bool = True,
   pass_through_objects: bool = False,
