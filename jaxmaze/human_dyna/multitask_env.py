@@ -31,6 +31,7 @@ class ResetParams:
   label: jax.Array = field(default_factory=lambda: jnp.array(0))
   randomize_agent: bool = field(default_factory=lambda: jnp.array(False))
   rotation: Tuple[int, int] = (0, 0)
+  train: bool = True
 
 
 @struct.dataclass
